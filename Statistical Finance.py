@@ -6,20 +6,22 @@ from pandas_datareader import data as pdr
 # NEED TO RENAME THESE PARAMETERS TO BE MORE INSIGHTFUL
 # COULD WE MAKE A CLASS CALLED __stat_fin__ THAT CAN HOUSE THESE DEFINITIONS? OR IS THAT TOO MUCH
 
+
 def pull_data(list, data_frame):
-    """Pulls stock data"""
+    """Pulls portfolio stock data and assigns it to a Data Frame object"""
 
     for l in list:
-        data_frame[l] = pdr.DataReader(l.upper(), data_source='yahoo', \
-            start='2018-1-1')['Adj Close']
+        data_frame[l] = pdr.DataReader(l.upper(), data_source='yahoo',
+                                       start='2018-1-1')['Adj Close']
 
 
 def normalize(data_frame):
     """Normalizes stock data and shows % return over a period of time"""
 
     normalized_data = (data_frame / data_frame.iloc[0]) * 100
-    normalized_data.plot(figsize = (15, 10))
-    plt.suptitle('Historical Return of Your Portfolio\'s Stocks', fontsize=20, y=.95)
+    normalized_data.plot(figsize=(15, 10))
+    plt.suptitle('Historical Return of Your Portfolio\'s Stocks',
+                 fontsize=20, y=.95)
     plt.show()
 
 
@@ -57,7 +59,7 @@ def wghts_calc(dict):
 
     weights = np.array(weights)
     return weights
-        
+
 
 def std_dev(weights, covariance):
     """calculates the standard deviation of a portfolio"""
@@ -65,13 +67,12 @@ def std_dev(weights, covariance):
     return np.dot(weights.T, np.dot(covariance, weights))
 
 
-# creates an empty data frame for use when pulling data
-data = pd.DataFrame()
-
-# gathers inputs for the data frame and formats them appropriately
-
 while True:
 
+    # creates an empty data frame for use when pulling data
+    data = pd.DataFrame()
+
+    # gathers inputs for the data frame and formats them appropriately
     tickers = input('Please input the ticker of each stock in your portfolio: ') \
         .upper().replace(',', '').split(' ')
 
@@ -81,11 +82,10 @@ while True:
     confirmation = input('Please confirm that the above tickers comprise your entire portfolio using Y / N: ') \
         .upper()
 
-    
     if confirmation == 'N':
-        
-        greeting = input('Please restart the program.')
-        
+
+        greeting = input('Please restart the program.\n')
+
     else:
 
         '''sets up an empty dictionary so that we can easily
@@ -94,18 +94,18 @@ while True:
 
         # loop that assigns the market value to each stock in the portfolio
         for t in tickers:
-            ques_wghts = input(f'Please input the dollar market value of your investment in {t}: $')
+            ques_wghts = input(
+                f'Please input the dollar market value of your investment in {t}: $')
             pfolio_fmv[t] = float(ques_wghts)
-        
+
+        # calculates the weight of each stock in the portfolio
         weights = wghts_calc(pfolio_fmv)
 
-        print(type(weights))
-
-        # NEED TO FIGURE THIS OUT - TRYING TO ASSIGN THE WEIGHTS TO EACH TICKER BUT ONLY PRINTS ONE WEIGHT TO ALL TICKERS
-        pretty_weights = {}
-        for t in tickers:
-            pretty_weights[t] = 0.0
-
+        # assigns each weight to a stock and displays it
+        wghts_list = list(weights)
+        for w in wghts_list:
+            str(round(w * 100, 2)) + '%'
+        pretty_weights = dict(zip(tickers, wghts_list))
         print(pretty_weights)
 
         pull_data(tickers, data)
@@ -115,57 +115,56 @@ while True:
 
         normalize(data)
 
+        print('PORTFOLIO EXPECTED RETURN VS. THE BROADER MARKET\n')
+
         # calculates the expected return for a portoflio
-        avg_return = pfolio_avg_return(data, weights)
-        avg_return = str(round(avg_return * 100,2))
+        avg_return = str(round(pfolio_avg_return(data, weights) * 100, 2))
 
-        print('PORTFOLIO EXPECTED RETURN VS. THE BROADER MARKET')
-    
-        # assigns variables for portfolio vs. market analysis
-        mkt = ['^GSPC']
-        mkt_df = pd.DataFrame()
-
-        market = pull_data(mkt, mkt_df)
+        # pulls S&P 500 data for portfolio vs. market analysis
+        mkt = pdr.DataReader('^GSPC', data_source='yahoo',
+                             start='2018-1-1')['Adj Close']
 
         # calculates avg historical return for the market
-        mkt_hist_rtrns = hist_return(mkt_df)
-        mkt_hist_rtrns = str(round(mkt_hist_rtrns * 100, 2))
-        print(f'Your portfolio\'s expected return based on historical averages is {avg_return}% as compared to the broader market\'s return of {mkt_hist_rtrns}%.')
+        mkt_hist_rtrns = str(round(hist_return(mkt) * 100, 2))
+
+        print(
+            f'Your portfolio\'s expected return based on historical averages is {avg_return}% as compared to the broader market\'s return of {mkt_hist_rtrns}%.')
 
         if float(avg_return) < float(mkt_hist_rtrns):
-            print('Your portfolio is expected to underperform the market.')
+            print('Your portfolio is expected to underperform the market.\n')
         else:
-            print('Your portfolio is expected to outperform the market.')
+            print('Your portfolio is expected to outperform the market.\n')
 
-        print('CORRELATION OF RETURNS FOR STOCKS IN YOUR PORTFOLIO')
-        
-        # calculates the correlation of each stock in the portfolio
-        returns = stock_returns(data)
-
-        corr = returns.corr()
-        print(corr)
-
-        print('STANDARD DEVIATION OF YOUR PORTFOLIO')
+        print('STANDARD DEVIATION OF YOUR PORTFOLIO\n')
 
         '''calculates the covariance of each stock for use when calculating
         the portfolio's standard deviation'''
+        returns = stock_returns(data)
         cov = returns.cov() * 250
 
         # calculates the standard deviation of a portfolio
         pfolio_sd = str(round(std_dev(weights, cov) * 100, 2))
-        print(f'The standard deviation of your portfolio is {pfolio_sd}%')
+        print(f'The standard deviation of your portfolio is {pfolio_sd}%\n')
 
-        print('PORTFOLIO STANDARD DEVIATION VS. THE BROADER MARKET')
+        print('PORTFOLIO STANDARD DEVIATION VS. THE BROADER MARKET\n')
 
-        mkt = ['^GSPC']
-        mkt_df = pd.DataFrame()
+        # NEED TO CHECK THE STANDARD DEVIATION CALC FOR BOTH THE MARKET & PFOLIO - MIGHT BE RIGHT/WRONG
+        mkt_std = str(round((mkt.std() * 250 ** .5) * 100, 2))
+        print(f'Your portfolio\'s standard deviation is {pfolio_sd}% as compared to the broader market\'s standard deviation of {mkt_std}%.')
 
-        market = pull_data(mkt, mkt_df)
+        if float(pfolio_sd) < float(mkt_std):
+            print('Your portfolio is less risky than the broader market.\n')
+        else:
+            print('Your portfolio is riskier than the broader market.\n')
 
-        mkt_hist_rtrns = hist_return(mkt_df)
+        print('CORRELATION OF RETURNS FOR STOCKS IN YOUR PORTFOLIO\n')
 
+        # calculates the correlation of each stock in the portfolio
+        corr = returns.corr()
+        print(corr)
+        print()
 
-        print('REMAINING DIVERSIFIABLE RISK IN YOUR PORTFOLIO')
+        print('REMAINING DIVERSIFIABLE RISK IN YOUR PORTFOLIO\n')
 
         # CONTINUE WRITING PROGRAM HERE
         # OTHER IDEAS - show how the std dev compares to that of the S&P 500
