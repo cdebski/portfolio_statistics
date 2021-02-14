@@ -29,18 +29,19 @@ def stock_returns(data_table):
     return (data_table / data_table.shift(1)) - 1
 
 
-def hist_return(returns):
+def hist_return(data_table):
     """Calculates the average return of each stock in the data table and 
     annualizes it based on # of trading days"""
 
+    returns = stock_returns(data_table)
     return returns.mean() * 250
 
 
-def pfolio_avg_return(returns, weights):
+def pfolio_avg_return(data_table, weights):
     """Calculates the dot product of each stocks' weights against 
     its respective annual avg return"""
 
-    return np.dot(weights, hist_return(returns))
+    return np.dot(weights, hist_return(data_table))
 
 
 def wghts_calc(dict):
@@ -98,12 +99,12 @@ while True:
         
         weights = wghts_calc(pfolio_fmv)
 
-        print(weights)
+        print(type(weights))
 
         # NEED TO FIGURE THIS OUT - TRYING TO ASSIGN THE WEIGHTS TO EACH TICKER BUT ONLY PRINTS ONE WEIGHT TO ALL TICKERS
         pretty_weights = {}
         for t in tickers:
-            pretty_weights[t] = pd.DataFrame(weights)
+            pretty_weights[t] = 0.0
 
         print(pretty_weights)
 
@@ -114,17 +115,33 @@ while True:
 
         normalize(data)
 
-        print('EXPECTED RETURN OF PORTFOLIO')
-
         # calculates the expected return for a portoflio
-        returns = stock_returns(data)
-        avg_return = pfolio_avg_return(returns, weights)
+        avg_return = pfolio_avg_return(data, weights)
         avg_return = str(round(avg_return * 100,2))
-        print(f'The expected return of your portfolio based on historical averages is {avg_return}%')
+
+        print('PORTFOLIO EXPECTED RETURN VS. THE BROADER MARKET')
     
+        # assigns variables for portfolio vs. market analysis
+        mkt = ['^GSPC']
+        mkt_df = pd.DataFrame()
+
+        market = pull_data(mkt, mkt_df)
+
+        # calculates avg historical return for the market
+        mkt_hist_rtrns = hist_return(mkt_df)
+        mkt_hist_rtrns = str(round(mkt_hist_rtrns * 100, 2))
+        print(f'Your portfolio\'s expected return based on historical averages is {avg_return}% as compared to the broader market\'s return of {mkt_hist_rtrns}%.')
+
+        if float(avg_return) < float(mkt_hist_rtrns):
+            print('Your portfolio is expected to underperform the market.')
+        else:
+            print('Your portfolio is expected to outperform the market.')
+
         print('CORRELATION OF RETURNS FOR STOCKS IN YOUR PORTFOLIO')
         
         # calculates the correlation of each stock in the portfolio
+        returns = stock_returns(data)
+
         corr = returns.corr()
         print(corr)
 
@@ -137,6 +154,16 @@ while True:
         # calculates the standard deviation of a portfolio
         pfolio_sd = str(round(std_dev(weights, cov) * 100, 2))
         print(f'The standard deviation of your portfolio is {pfolio_sd}%')
+
+        print('PORTFOLIO STANDARD DEVIATION VS. THE BROADER MARKET')
+
+        mkt = ['^GSPC']
+        mkt_df = pd.DataFrame()
+
+        market = pull_data(mkt, mkt_df)
+
+        mkt_hist_rtrns = hist_return(mkt_df)
+
 
         print('REMAINING DIVERSIFIABLE RISK IN YOUR PORTFOLIO')
 
