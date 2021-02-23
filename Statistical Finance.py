@@ -69,10 +69,10 @@ def std_dev(weights, covariance):
 
 while True:
 
-    # creates an empty data frame for use when pulling data
+    # creates an empty data frame pulling data
     data = pd.DataFrame()
 
-    # gathers inputs for the data frame and formats them appropriately
+    # gathers and formats inputs for the data frame
     tickers = input('Please input the ticker of each stock in your portfolio: ') \
         .upper().replace(',', '').split(' ')
 
@@ -88,17 +88,23 @@ while True:
 
     else:
 
-        '''sets up an empty dictionary so that we can easily
-        reference and assign weights to a ticker'''
+        # allows user to choose benchmark
+        print('Please enter the ticker for the benchmark you\'d like to compare your portfolio against. If you want to use an index, use the following tickers below:\n')
+        print('S&P 500: ^GSPC')
+        print('DJIA: ^DJI')
+        print('Nasdaq: ^IXIC\n')
+        benchmark = input().upper().split(' ')
+
+        # empty dictionary to assign weights to each ticker
         pfolio_fmv = {}
 
-        # loop that assigns the market value to each stock in the portfolio
+        # assigns market value to each stock in portfolio
         for t in tickers:
             ques_wghts = input(
                 f'Please input the dollar market value of your investment in {t}: $')
             pfolio_fmv[t] = float(ques_wghts)
 
-        # calculates the weight of each stock in the portfolio
+        # calculates weight of each stock in portfolio
         weights = wghts_calc(pfolio_fmv)
 
         # assigns each weight to a stock and displays it
@@ -110,9 +116,6 @@ while True:
 
         pull_data(tickers, data)
 
-        # converts all NaNs to 0
-        data.fillna(0)
-
         normalize(data)
 
         print('PORTFOLIO EXPECTED RETURN VS. THE BROADER MARKET\n')
@@ -120,12 +123,12 @@ while True:
         # calculates the expected return for a portoflio
         avg_return = str(round(pfolio_avg_return(data, weights) * 100, 2))
 
-        # pulls S&P 500 data for portfolio vs. market analysis
-        mkt = pdr.DataReader('^GSPC', data_source='yahoo',
+        # pulls benchmark data for portfolio vs. benchmark analysis
+        mkt = pdr.DataReader(benchmark, data_source='yahoo', 
                              start='2018-1-1')['Adj Close']
 
-        # calculates avg historical return for the market
-        mkt_hist_rtrns = str(round(hist_return(mkt) * 100, 2))
+        # calculates avg historical return for the benchmark
+        mkt_hist_rtrns = str(round(hist_return(mkt).iloc[0] * 100, 2))
 
         print(
             f'Your portfolio\'s expected return based on historical averages is {avg_return}% as compared to the broader market\'s return of {mkt_hist_rtrns}%.')
@@ -149,7 +152,8 @@ while True:
         print('PORTFOLIO STANDARD DEVIATION VS. THE BROADER MARKET\n')
 
         # NEED TO CHECK THE STANDARD DEVIATION CALC FOR BOTH THE MARKET & PFOLIO - MIGHT BE RIGHT/WRONG
-        mkt_std = str(round((mkt.std() * 250 ** .5) * 100, 2))
+        mkt_std = str(round((stock_returns(mkt).std().iloc[0] * 250 ** .5) 
+                      * 100, 2))
         print(f'Your portfolio\'s standard deviation is {pfolio_sd}% as compared to the broader market\'s standard deviation of {mkt_std}%.')
 
         if float(pfolio_sd) < float(mkt_std):
