@@ -180,4 +180,8 @@ while True:
         print('REMAINING DIVERSIFIABLE RISK IN YOUR PORTFOLIO\n')
 
         # CONTINUE WRITING PROGRAM HERE
-        # OTHER IDEAS - show how the std dev compares to that of the S&P 500
+        # OTHER IDEAS: 
+            # have .csv file that contains ticker, # of shares, and cost / share
+                # have code pull this data rather than use inputs
+                # weights calc would definitely change with this
+                # could calc the total return on portfolio
