@@ -83,17 +83,25 @@ while True:
         .upper()
 
     if confirmation == 'N':
-
         greeting = input('Please restart the program.\n')
 
     else:
-
         # allows user to choose benchmark
         print('Please enter the ticker for the benchmark you\'d like to compare your portfolio against. If you want to use an index, use the following tickers below:\n')
         print('S&P 500: ^GSPC')
         print('DJIA: ^DJI')
         print('Nasdaq: ^IXIC\n')
         benchmark = input().upper().split(' ')
+
+        # formats benchmark naming convention
+        if benchmark == '^GSPC':
+            bench_name = 'the S&P 500'
+        elif benchmark == '^DJI':
+            bench_name = 'the Dow Jones Industrial Average'
+        elif benchmark == '^IXIC':
+            bench_name = 'the NASDAQ'
+        else:
+            bench_name = benchmark
 
         # empty dictionary to assign weights to each ticker
         pfolio_fmv = {}
@@ -124,14 +132,14 @@ while True:
         avg_return = str(round(pfolio_avg_return(data, weights) * 100, 2))
 
         # pulls benchmark data for portfolio vs. benchmark analysis
-        mkt = pdr.DataReader(benchmark, data_source='yahoo', 
+        mkt = pdr.DataReader(benchmark, data_source='yahoo',
                              start='2018-1-1')['Adj Close']
 
         # calculates avg historical return for the benchmark
         mkt_hist_rtrns = str(round(hist_return(mkt).iloc[0] * 100, 2))
 
         print(
-            f'Your portfolio\'s expected return based on historical averages is {avg_return}% as compared to the broader market\'s return of {mkt_hist_rtrns}%.')
+            f'Your portfolio\'s expected return based on historical averages is {avg_return}% as compared to {bench_name}\'s return of {mkt_hist_rtrns}%.')
 
         if float(avg_return) < float(mkt_hist_rtrns):
             print('Your portfolio is expected to underperform the market.\n')
@@ -152,9 +160,10 @@ while True:
         print('PORTFOLIO STANDARD DEVIATION VS. THE BROADER MARKET\n')
 
         # NEED TO CHECK THE STANDARD DEVIATION CALC FOR BOTH THE MARKET & PFOLIO - MIGHT BE RIGHT/WRONG
-        mkt_std = str(round((stock_returns(mkt).std().iloc[0] * 250 ** .5) 
-                      * 100, 2))
-        print(f'Your portfolio\'s standard deviation is {pfolio_sd}% as compared to the broader market\'s standard deviation of {mkt_std}%.')
+        mkt_std = str(round((stock_returns(mkt).std().iloc[0] * 250 ** .5)
+                            * 100, 2))
+        print(
+            f'Your portfolio\'s standard deviation is {pfolio_sd}% as compared to {bench_name}\'s standard deviation of {mkt_std}%.')
 
         if float(pfolio_sd) < float(mkt_std):
             print('Your portfolio is less risky than the broader market.\n')
