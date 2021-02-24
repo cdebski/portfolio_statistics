@@ -60,7 +60,7 @@ class statfin:
     def std_dev(weights, covariance):
         """calculates the standard deviation of a portfolio"""
 
-        return round(np.dot(weights.T, np.dot(covariance, weights)) * 100, 2)
+        return round(np.dot(weights.T, np.dot(covariance, weights) ** .5) * 100, 2)
 
 
 while True:
@@ -165,8 +165,8 @@ while True:
         print('CORRELATION OF RETURNS FOR STOCKS IN YOUR PORTFOLIO\n')
 
         # calculates the correlation of each stock in the portfolio
-        corr = returns.corr()
-        print(corr)
+        correlation = returns.corr()
+        print(correlation)
         print()
 
         print('REMAINING DIVERSIFIABLE RISK IN YOUR PORTFOLIO\n')
