@@ -13,7 +13,7 @@ class statfin:
 
         for l in list:
             stock_DataFrame[l] = pdr.DataReader(l.upper(), data_source='yahoo',
-                                           start='2018-1-1')['Adj Close']
+                                                start='2018-1-1')['Adj Close']
 
     def normalize(stock_Data_Frame):
         """normalizes stock data and shows % return over a period of time"""
@@ -67,20 +67,27 @@ class statfin:
 
         return round(statfin.pfolio_var(weights, covariance) ** .5 * 100, 2)
 
-    def variance(data_table):
+    def variance(stock_DataFrame):
         """calculates variance for stocks in a portfolio"""
 
-        return data_table.var() * 250
+        return stock_DataFrame.var() * 250
 
-    def div_risk(weights, covariance, data_table):
+    def div_risk(weights, covariance, stock_DataFrame):
         """calculates diversifiable risk left in a portfolio"""
 
         stox_wghtd_var = 0
-        for ticker in data_table:
+        for ticker in stock_DataFrame:
             for index in enumerate(weights):
-                stox_wghtd_var += (weights[index] ** 2 * statfin.variance(data_table)[ticker])
+                stox_wghtd_var += (weights[index] ** 2 *
+                                   statfin.variance(stock_DataFrame)[ticker])
 
         return statfin.pfolio_var(weights, covariance) - stox_wghtd_var
+
+    def non_div_risk(weights, covariance, stock_DataFrame):
+        """calculates non-diversifiable risk in a portfolio"""
+
+        return statfin.pfolio_var(weights, covariance) - \
+            statfin.div_risk(weights, covariance, stock_DataFrame)
 
 
 while True:
