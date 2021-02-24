@@ -8,65 +8,85 @@ from pandas_datareader import data as pdr
 
 
 class statfin:
-    def pull_data(list, data_frame):
-        """Pulls portfolio stock data and assigns it to a Data Frame object"""
+    def pull_data(list, stock_DataFrame):
+        """pulls portfolio stock data and assigns it to a Data Frame object"""
 
         for l in list:
-            data_frame[l] = pdr.DataReader(l.upper(), data_source='yahoo',
+            stock_DataFrame[l] = pdr.DataReader(l.upper(), data_source='yahoo',
                                            start='2018-1-1')['Adj Close']
 
-    def normalize(data_frame):
-        """Normalizes stock data and shows % return over a period of time"""
+    def normalize(stock_Data_Frame):
+        """normalizes stock data and shows % return over a period of time"""
 
-        normalized_data = (data_frame / data_frame.iloc[0]) * 100
+        normalized_data = (stock_Data_Frame / stock_Data_Frame.iloc[0]) * 100
         normalized_data.plot(figsize=(15, 10))
         plt.suptitle('Historical Return of Your Portfolio\'s Stocks',
                      fontsize=20, y=.95)
         plt.show()
 
-    def stock_returns(data_table):
-        """Calculates the daily return of each stock and puts it into a Data Table"""
+    def stock_returns(stock_DataFrame):
+        """calculates the daily return of each stock and puts it into a Data Table"""
 
-        return (data_table / data_table.shift(1)) - 1
+        return (stock_DataFrame / stock_DataFrame.shift(1)) - 1
 
-    def hist_return(data_table):
-        """Calculates the average return of each stock in the data table and 
+    def hist_return(stock_DataFrame):
+        """calculates the average return of each stock in the data table and 
         annualizes it based on # of trading days - not rounded for calculation
         purposes"""
 
-        returns = statfin.stock_returns(data_table)
+        returns = statfin.stock_returns(stock_DataFrame)
         return returns.mean() * 250
 
-    def pfolio_avg_return(data_table, weights):
-        """Calculates the dot product of each stocks' weights against 
+    def pfolio_avg_return(stock_DataFrame, weights):
+        """calculates the dot product of each stocks' weights against 
         its respective annual avg return"""
 
-        return round(np.dot(weights, statfin.hist_return(data_table)) * 100, 2)
+        return round(np.dot(weights, statfin.hist_return(stock_DataFrame)) * 100, 2)
 
-    def wghts_calc(dict):
-        """Calculates the weights of each stock in a portfolio and adds them to an array"""
+    def wghts_calc(empty_dict):
+        """calculates the weights of each stock in a portfolio and adds them to an array"""
 
         x = 0
         weights = []
 
-        for d in dict:
-            x += dict[d]
-        for d in dict:
-            weights.append(dict[d] / x)
+        for d in empty_dict:
+            x += empty_dict[d]
+        for d in empty_dict:
+            weights.append(empty_dict[d] / x)
 
         weights = np.array(weights)
         return weights
 
-    def std_dev(weights, covariance):
-        """calculates the standard deviation of a portfolio"""
+    def pfolio_var(weights, covariance):
+        """calculates variance of a portfolio"""
 
-        return round(np.dot(weights.T, np.dot(covariance, weights) ** .5) * 100, 2)
+        return np.dot(weights.T, np.dot(covariance, weights))
+
+    def std_dev(weights, covariance):
+        """calculates standard deviation of a portfolio"""
+
+        return round(statfin.pfolio_var(weights, covariance) ** .5 * 100, 2)
+
+    def variance(data_table):
+        """calculates variance for stocks in a portfolio"""
+
+        return data_table.var() * 250
+
+    def div_risk(weights, covariance, data_table):
+        """calculates diversifiable risk left in a portfolio"""
+
+        stox_wghtd_var = 0
+        for ticker in data_table:
+            for index in enumerate(weights):
+                stox_wghtd_var += (weights[index] ** 2 * statfin.variance(data_table)[ticker])
+
+        return statfin.pfolio_var(weights, covariance) - stox_wghtd_var
 
 
 while True:
 
     # creates an empty data frame pulling data
-    data = pd.DataFrame()
+    stock_data = pd.DataFrame()
 
     # gathers and formats inputs for the data frame
     tickers = input('Please input the ticker of each stock in your portfolio: ') \
@@ -118,14 +138,14 @@ while True:
         pretty_weights = dict(zip(tickers, wghts_list))
         print(pretty_weights)
 
-        statfin.pull_data(tickers, data)
+        statfin.pull_data(tickers, stock_data)
 
-        statfin.normalize(data)
+        statfin.normalize(stock_data)
 
         print('PORTFOLIO EXPECTED RETURN VS. THE BROADER MARKET\n')
 
         # calculates the expected return for a portoflio
-        avg_return = str(statfin.pfolio_avg_return(data, weights))
+        avg_return = str(statfin.pfolio_avg_return(stock_data, weights))
 
         # pulls benchmark data for portfolio vs. benchmark analysis
         mkt = pdr.DataReader(benchmark, data_source='yahoo',
@@ -145,11 +165,11 @@ while True:
         print('PORTFOLIO STANDARD DEVIATION VS. THE BROADER MARKET\n')
 
         # calculates covariance for use when calculating the portfolio's standard deviation
-        returns = statfin.stock_returns(data)
-        cov = returns.cov() * 250
+        returns = statfin.stock_returns(stock_data)
+        covariance = returns.cov() * 250
 
         # calculates the standard deviation of a portfolio
-        pfolio_sd = str(statfin.std_dev(weights, cov))
+        pfolio_sd = str(statfin.std_dev(weights, covariance))
         print(f'The standard deviation of your portfolio is {pfolio_sd}%\n')
 
         mkt_std = str(round((statfin.stock_returns(mkt).std().iloc[0] * 250 ** .5)
