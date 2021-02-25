@@ -43,16 +43,16 @@ class statfin:
 
         return round(np.dot(weights, statfin.hist_return(stock_DataFrame)) * 100, 2)
 
-    def wghts_calc(empty_dict):
+    def wghts_calc(dictionary):
         """calculates the weights of each stock in a portfolio and adds them to an array"""
 
         x = 0
         weights = []
 
-        for d in empty_dict:
-            x += empty_dict[d]
-        for d in empty_dict:
-            weights.append(empty_dict[d] / x)
+        for d in dictionary:
+            x += dictionary[d]
+        for d in dictionary:
+            weights.append(dictionary[d] / x)
 
         weights = np.array(weights)
         return weights
@@ -72,8 +72,9 @@ class statfin:
 
         return stock_DataFrame.var() * 250
 
-    def div_risk(weights, covariance, stock_DataFrame):
-        """calculates diversifiable risk left in a portfolio"""
+    def diversifiable_risk(weights, covariance, stock_DataFrame):
+        """calculates diversifiable risk left in a portfolio - not
+        rounded for calculation purposes"""
 
         stox_wghtd_var = 0
         for ticker in stock_DataFrame:
@@ -83,11 +84,19 @@ class statfin:
 
         return statfin.pfolio_var(weights, covariance) - stox_wghtd_var
 
-    def non_div_risk(weights, covariance, stock_DataFrame):
+    def non_divers_risk(weights, covariance, stock_DataFrame):
         """calculates non-diversifiable risk in a portfolio"""
 
-        return statfin.pfolio_var(weights, covariance) - \
-            statfin.div_risk(weights, covariance, stock_DataFrame)
+        return round(statfin.pfolio_var(weights, covariance) -
+                     statfin.diversifiable_risk(
+                         weights, covariance, stock_DataFrame)
+                     * 100, 2)
+
+    def format(function):
+        """formats function as string that is a percentage 
+        multiplied by 100 rounded to two decimals ('xx.yy')"""
+
+        return str(round(function * 100, 2))
 
 
 while True:
@@ -136,10 +145,10 @@ while True:
             pfolio_fmv[t] = float(ques_wghts)
 
         # calculates weight of each stock in portfolio
-        weights = statfin.wghts_calc(pfolio_fmv)
+        stock_weights = statfin.wghts_calc(pfolio_fmv)
 
         # assigns each weight to a stock and displays it
-        wghts_list = list(weights)
+        wghts_list = list(stock_weights)
         for w in wghts_list:
             str(round(w * 100, 2)) + '%'
         pretty_weights = dict(zip(tickers, wghts_list))
@@ -152,7 +161,7 @@ while True:
         print('PORTFOLIO EXPECTED RETURN VS. THE BROADER MARKET\n')
 
         # calculates the expected return for a portoflio
-        avg_return = str(statfin.pfolio_avg_return(stock_data, weights))
+        avg_return = str(statfin.pfolio_avg_return(stock_data, stock_weights))
 
         # pulls benchmark data for portfolio vs. benchmark analysis
         mkt = pdr.DataReader(benchmark, data_source='yahoo',
@@ -173,10 +182,10 @@ while True:
 
         # calculates covariance for use when calculating the portfolio's standard deviation
         returns = statfin.stock_returns(stock_data)
-        covariance = returns.cov() * 250
+        cov = returns.cov() * 250
 
         # calculates the standard deviation of a portfolio
-        pfolio_sd = str(statfin.std_dev(weights, covariance))
+        pfolio_sd = str(statfin.std_dev(stock_weights, cov))
         print(f'The standard deviation of your portfolio is {pfolio_sd}%\n')
 
         mkt_std = str(round((statfin.stock_returns(mkt).std().iloc[0] * 250 ** .5)
@@ -198,7 +207,15 @@ while True:
 
         print('REMAINING DIVERSIFIABLE RISK IN YOUR PORTFOLIO\n')
 
-        # CONTINUE WRITING PROGRAM HERE
+        # NEED TO TEST THESE FUNCTIONS
+        pfolio_dr = str(round(statfin.diversifiable_risk(
+                              stock_weights, cov, stock_data) * 100, 2))
+        print(
+            f'The remaining risk in your portfolio that can be diversified is {pfolio_dr}%.\n')
+
+        print('NON-DIVERSIFIABLE RISK IN YOUR PORTFOLIO\n')
+
+        pfolio_ndr = str(statfin.non_divers_risk(stock_weights, cov, stock_data))
 
         # OTHER IDEAS:
         # have .csv file that contains ticker, # of shares, and cost / share
