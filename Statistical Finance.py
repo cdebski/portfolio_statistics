@@ -2,10 +2,10 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from pandas_datareader import data as pdr
+import os
 
+# NEED TO FIGURE OUT HOW TO USE OS PACKAGE - COULD BE HELPFUL FOR EVERYONE
 # NEED TO RENAME THESE PARAMETERS TO BE MORE INSIGHTFUL
-# COULD WE MAKE A CLASS CALLED __stat_fin__ THAT CAN HOUSE THESE DEFINITIONS? OR IS THAT TOO MUCH
-
 
 class statfin:
     def pull_data(list, stock_DataFrame):
@@ -99,23 +99,19 @@ class statfin:
         return str(round(function * 100, 2))
 
 
+
 while True:
+    # pulls stock data from csv file
+    stock_data = pd.read_csv('C:/Users/Charl/Desktop/data.csv')
 
-    # creates an empty data frame pulling data
-    stock_data = pd.DataFrame()
-
-    # gathers and formats inputs for the data frame
-    tickers = input('Please input the ticker of each stock in your portfolio: ') \
-        .upper().replace(',', '').split(' ')
-
-    print(tickers)
-
-    # confirmation of the inputs to ensure correct formatting/spelling
-    confirmation = input('Please confirm that the above tickers comprise your entire portfolio using Y / N: ') \
-        .upper()
+    print(stock_data)
+    print('')
+    
+    # confirms that stock data is correct
+    confirmation = input('Is the above stock information correct? Use Y / N to answer: \n')
 
     if confirmation == 'N':
-        greeting = input('Please restart the program.\n')
+        greeting = input('Please update the .csv saved on your desktop and restart the program.\n')
 
     else:
         # allows user to choose benchmark
